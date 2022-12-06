@@ -1,0 +1,505 @@
+import random
+import re
+
+
+
+levels = {1:0, 2:350, 3:1100, 4:2100, 5:3500}
+
+class Fighter:
+  hp = [75, 110, 150, 180, 215]
+  weapon = ['Sword', random.randint(4, 5)]
+  dmg_ablt = ['power strike', 'attack']
+  dfence_ablt = ['defend', 'iron skin']
+  ablt_reso = {'power strike' : 25, 'defend' : 10, 'iron skin' : 30, 'attack' : 0}
+  ablt = 'Attack [0], Power Strike [25], Defend [10], Iron Skin [30]'
+
+  def dmg_ablts(choice, dmg):
+    if choice == 'power strike':
+      ablt_mod = dmg + random.choice([3, 3, 3, 3, 4])
+    if choice == 'attack':
+      ablt_mod = dmg
+    return ablt_mod
+  
+  def dfence_ablts(choice):
+    if choice == 'defend':
+      dfence = main_char.level * 2
+    elif choice == 'iron skin':
+      dfence = main_char.level * random.choice([2, 2, 3, 3, 3, 4])
+    return dfence
+
+
+
+
+
+
+class Archer:
+  hp = [60, 90, 110, 140, 180]
+  weapon = ['Bow', random.randint(3, 6)]
+  dmg_ablt = ['aimed shot','quick shot', 'full draw', 'attack']
+  dfence_ablt = []
+  ablt_reso = {'aimed shot' : 40, 'quick shot' : 10, 'full draw' : 25, 'attack' : 0}
+  ablt = 'Attack[0], Aimed Shot [40], Quick Shot [10], Full Draw [25]'
+
+  def dmg_ablts(choice, dmg):
+    if choice == 'aimed shot':
+      if main_char.level == 1:
+        ablt_mod = dmg + 5
+      ablt_mod = (dmg * 2) + (main_char.level * 2)
+    elif choice == 'quick shot':
+      ablt_mod = main_char.level + dmg
+    elif choice == 'full draw':
+      ablt_mod = 5 * (0.5 * dmg)
+    elif choice == 'attack':
+      ablt_mod = dmg
+    return ablt_mod
+
+
+
+
+
+class Mage:
+  hp = [50, 75, 90, 110, 145]
+  weapon = ['Staff', random.randint(2, 3)]
+  mana = [130, 160, 200, 250, 310]
+  dmg_ablt = ['fireball',  'frostbolt', 'freeze', 'attack']
+  dfence_ablt = []
+  ablt_reso = {'fireball' : 30, 'frostbolt' : 20, 'freeze' : 25, 'attack' : 0}
+  ablt = 'Attack [0], Fireball [30], Frostbolt [20], Freeze [25]'
+
+  def dmg_ablts(choice, dmg):
+    if choice == 'fireball':
+      ablt_mod = random.choice([8, 8, 6 + dmg])
+    elif choice == 'frostbolt':
+      ablt_mod = random.choice([3, 3, 6, 6, 6, 8 + dmg])
+    elif choice == 'freeze':
+      ablt_mod = 1
+    elif choice == 'attack':
+      ablt_mod = dmg
+    return ablt_mod
+
+
+
+
+###Defining the Main character or Player Class and all of its attributes
+
+class Player:
+  def __init__(self, name, occu):
+    self.name = name
+    self.occu = occu.lower()
+    self.exp = 0
+    self.level = 1
+    self.maxhp = 0
+    self.hp = 0
+    self.mana = 0
+    self.energy = 100
+    self.resource = 0
+    self.weapon = None
+    
+    #Making the occupation into its corresponding class
+    if self.occu == 'fighter':
+      self.occu = Fighter
+    elif self.occu == 'archer':
+      self.occu = Archer
+    elif self.occu == 'mage':
+      self.occu = Mage
+
+###When the Main Character is called print out basic information
+  def __repr__(self):
+    cc = "\n{Character}'s Class: {occu}\n".format(Character=self.name,occu = self.occu.__name__)
+    cmhp = "{Character}'s Max HP: {maxhp}\n".format(Character=self.name,maxhp=self.maxhp)
+    chp = "{Character}'s Current HP: {hp}\n".format(Character=self.name,hp=self.hp)
+    cw = "{Character}'s Weapon: {weapon}\n".format(Character=self.name, weapon=self.weapon)
+    cr = "{Character}'s Resource: {resource}\n".format(Character=self.name,resource=self.resource)
+    cl = "{Character}'s Level: {level}\n".format(Character=self.name,level=self.level)
+    cx = "{Character}'s Exp {exp}\n".format(Character=self.name,exp=self.exp)
+    return cc + cmhp + chp + cw + cr + cl + cx
+
+  #Assigning the correct occupation variables to the main character
+  #The levels don't have the minus 1 since the character is still being created and the level is still 0
+  def assigning_occu(self):
+    if self.occu is Mage:
+      self.mana = Mage.mana[self.level-1]
+      self.maxhp = Mage.hp[self.level-1]
+      self.hp = self.maxhp
+      self.weapon = (Mage.weapon)
+    elif self.occu is Fighter:
+      self.maxhp = Fighter.hp[self.level-1]
+      self.hp = self.maxhp
+      self.weapon = (Fighter.weapon)
+    elif self.occu is Archer:
+      self.maxhp = Archer.hp[self.level-1]
+      self.hp = self.maxhp
+      self.weapon = (Archer.weapon)
+    else:
+      print("Error No Occupation")
+
+    #Asigning Mana for mages and energy for others as their main resource
+    if self.occu != Mage:
+      self.resource = self.energy
+    else:
+      self.resource = self.mana
+ #Leveling your character up and assigning them correct variables with leveling up
+
+  def gain_exp(self, inc_exp = 0):
+    done = False
+    self.exp += inc_exp
+    for k,v in levels.items():
+      if self.exp >= levels[k] and self.exp < levels.get(k + 1, 10000):
+        old_level = self.level
+        self.level = k
+        self.maxhp = self.occu.hp[self.level - 1]
+        if self.level > old_level and self.occu != Mage and old_level != 0:
+          print('\nCongratulations you have leveled from {old} to {new}\n'.format(old=old_level, new=k))
+          self.resource = self.energy
+          self.hp = self.maxhp
+        done = True
+        if self.occu is Mage:
+          self.mana = self.occu.mana[self.level - 1]
+          if self.level > old_level and old_level != 0:
+            print('\nCongratulations you have leveled from {old} to {new}\n'.format(old=old_level, new=k))
+            self.resource = self.mana
+            self.hp = self.maxhp
+        break
+    if done == False:
+      print("Experience out of range")
+
+    ###Defining the enemy instances within gaining exp so the monsters automatically level with the main character
+    orc = Enemy('Orc', self.level, 8, 4)
+    goblin = Enemy('Goblin', self.level, 7, 6)
+    skeleton = Enemy('Skeleton', self.level, 14, 3)
+    return orc, goblin, skeleton
+        
+
+  #Dealing damage with your player
+  def attack_choice(self):
+    if self.occu == Mage:
+      print('\n{char} has {res} mana left'.format(char=self.name, res=self.resource))
+    else:
+      print('\n{char} has {res} energy left'.format(char=self.name, res=self.resource))
+
+    print('What ability would you like to use\n', self.occu.ablt)
+    choice = input('\n')
+    choice = choice.lower().strip()
+
+    ###Check if you have enough resources to cast your ability
+    if self.resource - self.occu.ablt_reso[choice] < 0:
+      print("Sorry {char} you don't have enough resources to use that ability. Try Another!".format(char=main_char.name))
+      return self.attack_choice()
+    else:
+      self.resource -= self.occu.ablt_reso[choice]
+
+      ###Checking if the ability that was entered is in the characters ability list and if not asks them again for a correct attack   
+    x = 1
+    found = False
+    while x <= len(self.occu.ablt_reso):
+      for y in self.occu.ablt_reso:
+        if choice != y:
+          x += 1
+          continue
+        elif choice == y:
+          found = True
+          break
+      if found == True:
+        break
+      else:
+        print("Sorry! You don't have that ability. Try Again!")
+        return self.attack_choice()
+    ###Looping through defnece and attack abilities to figure out which one was done by the main character
+    for inpt in self.occu.dmg_ablt:
+      if choice == inpt:
+        print('\n{char} attacking\n'.format(char=self.name))
+        return self.attack(choice), choice, True
+
+    for inpt in self.occu.dfence_ablt:
+      if choice == inpt:
+        print('\n{char} defending\n'.format(char=self.name))
+        dfence = self.occu.dfence_ablts(choice)
+        return dfence, choice, False
+
+        
+
+        
+  def attack(self, choice, equip_mod=0):
+    #print(choice)
+    ablt_mod2 = self.occu.dmg_ablts(choice, self.weapon[1]) 
+    #Check statements for attacking
+    # print(self.weapon[1])
+    # print(choice.lower())
+    # print(self.occu.dmg_ablts(choice, self.weapon[1]))
+    dmg = ablt_mod2 * (0.8 * self.level) + equip_mod
+    return round(dmg)
+
+  
+
+  def take_dmg(self, inc_dmg, dfence=0):
+    total = inc_dmg - dfence
+    if total < 0:
+      total = 0
+    self.hp -= total
+    return total
+
+  
+  def early_end(self):
+    print("{char} has decided to leave the castle. The way forward has gotten too dark and they can't carry on".format(char=self.name))
+    print('You ended at {level} with {exp} experience points'.format(level=self.level, exp=self.exp))
+    exit()
+
+  
+
+
+      
+
+
+
+
+class Enemy:
+  def __init__(self, name, level, hp, be_dmg):
+    self.name = name
+    self.hp = hp
+    self.level = level
+    self.exp_give = [70, 150, 200, 280]
+    self.be_dmg = be_dmg
+
+    if self.level == 1:
+      self.e_dmg = self.be_dmg
+    elif self.level == 2:
+      self.e_dmg = self.be_dmg * self.level
+      self.hp = round(self.hp + (self.hp / 2))
+    elif self.level < 4:
+      self.e_dmg = 2 + self.be_dmg * self.level - self.level
+      self.hp = round(5 + self.hp * self.level)
+
+    
+  def __repr__(self):
+    b = '\n{char} has encountered an {enemy}\n'.format(char=main_char.name, enemy=self.name)
+    explan = '{e} is level {level} with {hp} hit points'.format(e=self.name, level=self.level, hp=self.hp)
+    return b + explan
+  
+
+  def e_take_dmg(self, dmg):
+    self.hp -= dmg
+
+
+  
+
+
+
+
+###Fight interactions between enemy and character
+### char_list: 0=damage/defense  1=choice  2=if defense or attack is chosen 
+
+
+def fight_actions(character, enemy):
+  char_list = character.attack_choice()
+  char_ablt = char_list[1]
+  ###If a damage ability was chosen then this conditonal runs
+  if char_list[2]:
+    char_dmg = char_list[0]
+    enemy.e_take_dmg(char_dmg)
+    print("{e} takes {cd} damage from {charname}'s {choice}".format(e=enemy.name, cd=char_dmg, charname=character.name, choice=char_ablt.capitalize()))
+    print("{e} now has {ehp} hit points".format(e=enemy.name, ehp=enemy.hp))
+    if death(character,enemy) == True:
+      return character.gain_exp(enemy.exp_give[enemy.level - 1])
+    ###Conditional for Mages if they use their freeze ability
+    if char_ablt != 'freeze':
+      char_recv = character.take_dmg(enemy.e_dmg)
+      print("{charname} has {charhp} hitpoints after taking {total} damage from {e}".format(charname=character.name, charhp=character.hp, total=char_recv, e=enemy.name))
+      if death(character,enemy) == True:
+        return True
+    else:
+      print('{charname} has used {choice} and {e} cannot take action for 2 turns'.format(charname=character.name, choice=char_ablt.capitalize(), e=enemy.name))
+      char_list = character.attack_choice()
+      enemy.e_take_dmg(char_list[0])
+      print("{e} takes {cd} damage from {charname}'s {choice}".format(e=enemy.name, cd=char_list[0], charname=character.name, choice=char_list[1].capitalize()))
+      print("{e} now has {ehp} hit points".format(e=enemy.name, ehp=enemy.hp))
+      if death(character,enemy) == True:
+        return character.gain_exp(enemy.exp_give[enemy.level - 1])
+  
+  ###Conditional if the character uses a defensive ability
+  elif not char_list[2]:
+    char_dfence = char_list[0]
+    print("You must use an offensive ability as your 2nd ability")
+    char_list2 = character.attack_choice()
+    enemy.e_take_dmg(char_list2[0])
+    print("{e} takes {cd} damage from {charname}'s {choice}".format(e=enemy.name, cd=char_list2[0], charname=character.name, choice=char_list2[1].capitalize()))
+    print("{e} now has {ehp} hit points".format(e=enemy.name, ehp=enemy.hp))
+    char_recv = character.take_dmg(enemy.e_dmg, char_dfence)
+    print("\n{char} uses {ablt} to block {dmg} damage".format(char=character.name, ablt=char_list[1], dmg=char_list[0]))
+    print("{charname} has {charhp} hitpoints after taking {total} damage from {e}".format(charname=character.name, charhp=character.hp, total=char_recv, e=enemy.name))
+    if death(character,enemy) == True:
+      return character.gain_exp(enemy.exp_give[enemy.level - 1])
+    
+
+  if death(character,enemy) == False:
+    return fight_actions(character, enemy)
+
+
+def death(character, enemy): 
+  if character.hp > 0 and enemy.hp > 0:
+    return False
+  elif enemy.hp <= 0:
+    print('{e} has been slain by {charname}'.format(e=enemy.name, charname=character.name))
+    print('{charname} has gained {exp} experience from {e}'.format(charname=character.name, exp = enemy.exp_give[enemy.level - 1], e=enemy.name))
+    return True
+  elif character.hp <= 0:
+    print('{charname} has fallen in battle to {e}'.format(e=enemy.name, charname=character.name))
+    print('You ended at {level} with {exp} experience points'.format(level=character.level, exp=character.exp))
+    exit()
+    
+
+
+
+
+
+def fight(story, monster, main_char):
+  print(story)
+  x = False
+  while x == False:
+    fight_bool = input()
+    if bool(re.search('[Yy]\S*[Ss]*', fight_bool)) == True:
+      print(monster)
+      act = fight_actions(main_char, monster)
+      print(main_char)
+      x = True
+      return act
+    elif bool(re.search('[Nn][Oo]*', fight_bool)) == True:
+      x = True
+      main_char.early_end()
+    print("You didn't answer Yes or No! Please try again.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+player_name = input("What would you like to call your champion?\n")
+player_occu = input("What would you like your champion to be? Fighter, Mage, or Archer.\nType below\n")
+
+#Checking if the occupation was typed correctly and adjusting based on what they wrote anything with F and R inbetween is Fighter, any thing with M and E inbetween is a mage and anything with A and R inbetween is an archer
+if bool(re.search('[Ff]\S*[Rr]', player_occu)) == True:
+  player_occu = "Fighter"
+elif bool(re.search('[Mm]\S*[Ee]', player_occu)) == True:
+  player_occu = "Mage"
+elif bool(re.search('[Aa]\S*[Rr]', player_occu)) == True:
+  player_occu = 'Archer'
+
+main_char = Player(player_name, player_occu)
+
+boss = Enemy('Jar Jar Binks', 6, 100, 7)
+main_char.assigning_occu()
+monsters = main_char.gain_exp()
+print(main_char)
+
+###The story begins
+fight_1 = ('{char} walks infront of a decripted castle door. Does {char} walk in?\nY/N\n'.format(char=main_char.name))
+monsters = fight(fight_1, monsters[0], main_char)
+
+
+
+fight_2 = ('\n{char} sees a tattered room with the air scratching their throat from the plumes of dust created by the movement in the room. {char} makes their way to the back of the room where the remains of a door stand.\nDoes {char} climb ontop of the wreckage and make their way through\nY/N'.format(char=main_char.name))
+monsters = fight(fight_2, monsters[1], main_char)
+
+
+fight_3 = ('\nThe further {char} makes their way into the castle the darker and darker it becomes. {char} reaches a spiral staircase going into the floor, do you decend?\nY/N'.format(char=main_char.name))
+monsters = fight(fight_3, monsters[0], main_char)
+
+
+fight_4 = ('\nIn total darkness, {char} hugs the wall to make their way throught the corridor. At a point {char} feels a sharp stick jutting from the wall. {char} believes this to be an old torch. With a few strikes of their flint {char} is able to get it alight. As soon as {char} stands and looks down the hall they see animated bones in their face. Does {char} stay and fight?\nY/N'.format(char=main_char.name))
+monsters = fight(fight_4, monsters[2], main_char)
+
+
+fight_5 = ('\nMaking their way further down the donwstairs hallway, {char} encounters another creature. Does {char} stay and fight?\nY/N'.format(char=main_char.name))
+monsters = fight(fight_5, monsters[1], main_char)
+
+
+fight_6 = ("\nThere now stands a large set of double doors but they don't seem to be old, they look like they are being currently used and maintained. Does {char} open the double doors?\nY/N".format(char=main_char.name))
+monsters = fight(fight_6, monsters[2], main_char)
+
+
+fight_7 = ("\n{char} keeps walking further into the room before a Goblin jumps from nowhere. Does {char} stay\nY/N".format(char=main_char.name))
+monsters = fight(fight_7, monsters[1], main_char)
+
+
+fight_8 = ("\nWithout even a moment to catch their breath. {char} see's an Orc running down the hall towards them. Does {char} stay and fight?\nY/N".format(char=main_char.name))
+monsters = fight(fight_8, monsters[0], main_char)
+
+
+fight_9 = ("\nThe Orc's dead body starts to tremble as you see its flesh seperate from it's bones. At this sight does {char} muster their strength and fight?\nY/N".format(char=main_char.name))
+monsters = fight(fight_9, monsters[2], main_char)
+
+
+fight_10 = ("\nThere is finally enough time for {char} to rest a bit. Not for long though as {char} hear's some grunts coming from down the hall. Does {char} approach\nY/N".format(char=main_char.name))
+monsters = fight(fight_10, monsters[0], main_char)
+
+
+fight_11 = ("\nThe commotion created by your past fights have stired the place up. The evil that lies within this place is on it's way to you. Does {char} face what is to come\nY/N".format(char=main_char.name))
+monsters = fight(fight_11, monsters[2], main_char)
+
+
+fight_12 = ("\nHere come's another does {char} stay and fight?\nY/N".format(char=main_char.name))
+monsters = fight(fight_12, monsters[2], main_char)
+
+
+fight_13 = ("\nLooks like it's Goblin time. Does {char} stay and fight these cutthroats?\nY/N".format(char=main_char.name))
+monsters = fight(fight_13, monsters[1], main_char)
+
+
+fight_14 = ("\nThere are many more than that Goblin. Does {char} stay?".format(char=main_char.name))
+monsters = fight(fight_14, monsters[1], main_char)
+
+
+fight_15 = ("\nDoes {char} fight another?\nY/N".format(char=main_char.name))
+monsters = fight(fight_15, monsters[1], main_char)
+
+
+fight_16 = ("\nThat seems to have been the last of the Goblins. Now time for {char} to rest for a moment, while they gather their strength for the Orc horde. Looks like the Orc's were quicker than anticipated and the 1st one is almost face to face with {char}. Does {char} fight?\nY/N".format(char=main_char.name))
+monsters = fight(fight_16, monsters[0], main_char)
+
+
+fight_17 = ("\nAnd another?\nY/N")
+monsters = fight(fight_17, monsters[0], main_char)
+
+
+fight_18 = ("\nThis really is a horde they won't stop coming. {char} seems exhausted. Is {char} up for another fight?".format(char=main_char.name))
+monsters = fight(fight_18, monsters[0], main_char)
+
+
+fight_19 = ("\nAnd another>\nY/N")
+monsters = fight(fight_19, monsters[0], main_char)
+
+
+fight_20 = ("\nThe last Orc appears to be approaching {char}. Is {char} able to fight?\nY/N".format(char=main_char.name))
+monsters = fight(fight_20, monsters[0], main_char)
+
+fight_21 = ("\nThe room now falls to a hush silence as the last Orc falls. After a few moments though a deep grumbling voice can be heard from afar. All 5 Orc bodies start to tremble as their flesh begins to seperate once again. Does {char} have the stomach for more fights?\nY/N".format(char=main_char.name))
+monsters = fight(fight_21, monsters[2], main_char)
+
+fight_22 = ("\nThe 2nd Skeleton rises. Time to fight?\nY/N")
+monsters = fight(fight_22, monsters[2], main_char)
+
+
+fight_23 = ("\nGod these necromancers and their spells are annoying {char}. Here is the next Skeleton. Does {char} fight?\nY/N".format(char=main_char.name))
+monsters = fight(fight_23, monsters[2], main_char)
+
+
+fight_24 = ("\nAnd another?\nY/N")
+monsters = fight(fight_24, monsters[2], main_char)
+
+
+fight_25 = ("\n{char} never thought they'd be relieved to see a dead bodie's flesh split open, but because this is the last one. Oh my God is {char} ecstatic. However is {char} able to fight this last one.\nY/N".format(char=main_char.name))
+monsters = fight(fight_25, monsters[2], main_char)
+
+
+fight_26 = ("\n{char} has slain the last of the creatures and it's now time to face the dark necromancer that lies ahead. {char} charges down the hallway at the end of the room. When {char} approaches the doorway they hear 'MEESA GON GET YOU. Thrown off by this weird speech does {char} stay and fight".format(char=main_char.name))
+monsters = fight(fight_26, boss. main_char)
+
+print("Congratulations you have survived the lair of Jar Jar Binks. You've escaped at {level} with {exp}")
+exit()
+
