@@ -181,12 +181,6 @@ class Player:
     choice = input('\n')
     choice = choice.lower().strip()
 
-    ###Check if you have enough resources to cast your ability
-    if self.resource - self.occu.ablt_reso[choice] < 0:
-      print("Sorry {char} you don't have enough resources to use that ability. Try Another!".format(char=main_char.name))
-      return self.attack_choice()
-    else:
-      self.resource -= self.occu.ablt_reso[choice]
 
       ###Checking if the ability that was entered is in the characters ability list and if not asks them again for a correct attack   
     x = 1
@@ -204,6 +198,15 @@ class Player:
       else:
         print("Sorry! You don't have that ability. Try Again!")
         return self.attack_choice()
+
+
+    ###Check if you have enough resources to cast your ability
+    if self.resource - self.occu.ablt_reso[choice] < 0:
+      print("Sorry {char} you don't have enough resources to use that ability. Try Another!".format(char=main_char.name))
+      return self.attack_choice()
+    else:
+      self.resource -= self.occu.ablt_reso[choice]
+
     ###Looping through defnece and attack abilities to figure out which one was done by the main character
     for inpt in self.occu.dmg_ablt:
       if choice == inpt:
@@ -265,7 +268,7 @@ class Enemy:
     elif self.level == 2:
       self.e_dmg = self.be_dmg * self.level
       self.hp = round(self.hp + (self.hp / 2))
-    elif self.level < 4:
+    elif self.level <= 4:
       self.e_dmg = 2 + self.be_dmg * self.level - self.level
       self.hp = round(5 + self.hp * self.level)
 
@@ -278,6 +281,8 @@ class Enemy:
 
   def e_take_dmg(self, dmg):
     self.hp -= dmg
+    if self.hp < 0:
+      self.hp = 0
 
 
   
