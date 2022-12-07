@@ -385,15 +385,23 @@ def fight(story, monster, main_char):
 
 
 player_name = input("What would you like to call your champion?\n")
-player_occu = input("What would you like your champion to be? Fighter, Mage, or Archer.\nType below\n")
+
 
 #Checking if the occupation was typed correctly and adjusting based on what they wrote anything with F and R inbetween is Fighter, any thing with M and E inbetween is a mage and anything with A and R inbetween is an archer
-if bool(re.search('[Ff]\S*[Rr]', player_occu)) == True:
-  player_occu = "Fighter"
-elif bool(re.search('[Mm]\S*[Ee]', player_occu)) == True:
-  player_occu = "Mage"
-elif bool(re.search('[Aa]\S*[Rr]', player_occu)) == True:
-  player_occu = 'Archer'
+while True:
+  player_occu = input("What would you like your champion to be?\n\n1. Fighter\n2. Mage\n3. Archer\nEnter a number ")
+  if bool(re.search('[Ff]\S*[Rr]', player_occu)) == True or player_occu == "1":
+    player_occu = "Fighter"
+    break
+  elif bool(re.search('[Mm]\S*[Ee]', player_occu)) == True or player_occu == "2":
+    player_occu = "Mage"
+    break
+  elif bool(re.search('[Aa]\S*[Rr]', player_occu)) == True or player_occu == "3":
+    player_occu = 'Archer'
+    break
+  else:
+    print("Please enter a number or class name")
+
 
 main_char = Player(player_name, player_occu)
 
